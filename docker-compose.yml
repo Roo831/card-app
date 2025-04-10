@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  sqlcont:
+    image: postgres
+    environment:
+      POSTGRES_USER: 'postgres'
+      POSTGRES_PASSWORD: 'card_password'
+      POSTGRES_DB: card-db
+    ports:
+      - "5433:5432"
