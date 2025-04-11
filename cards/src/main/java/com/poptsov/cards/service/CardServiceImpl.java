@@ -13,6 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class CardServiceImpl implements CardService {
     private final CardRepository cardRepository;
@@ -63,5 +65,11 @@ public class CardServiceImpl implements CardService {
         }
         card.setStatus("BLOCKED");
         cardRepository.save(card);
+    }
+    @Override
+    public List<CardResponseDto> getUserCards(Long userId) {
+        return cardRepository.findByUserId(userId).stream()
+                .map(cardMapper::toResponseDto)
+                .toList();
     }
 }

@@ -7,12 +7,13 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
 
-@Mapper(imports = {java.math.BigDecimal.class, java.time.LocalDate.class}, componentModel = "spring")
+@Mapper(componentModel = "spring")
 public interface CardMapper {
-    CardMapper INSTANCE = Mappers.getMapper(CardMapper.class);
 
-    @Mapping(source = "cardNumberMasked", target = "maskedNumber")
     CardResponseDto toResponseDto(Card card);
 
-    Card toEntity(CardCreateDto cardCreateDto);
+    // Если преобразование не нужно, можно удалить
+    default Card toEntity(CardCreateDto dto) {
+        return null;
+    }
 }
