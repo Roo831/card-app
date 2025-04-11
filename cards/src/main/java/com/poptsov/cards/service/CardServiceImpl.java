@@ -54,4 +54,14 @@ public class CardServiceImpl implements CardService {
         }
         return cardMapper.toResponseDto(card);
     }
+
+    @Override
+    public void blockCard(Long cardId, Long userId) {
+        Card card = cardRepository.findById(cardId).orElseThrow();
+        if (!card.getUser().getId().equals(userId)) {
+            throw new AccessDeniedException("Card doesn't belong to the user");
+        }
+        card.setStatus("BLOCKED");
+        cardRepository.save(card);
+    }
 }
