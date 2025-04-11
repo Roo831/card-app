@@ -17,10 +17,10 @@ public class Card {
     private User user;
 
     @Column(name = "card_number_encrypted", nullable = false)
-    private String cardNumberEncrypted;  // Зашифрованный номер (AES)
+    private String cardNumberEncrypted;
 
     @Column(name = "card_number_masked", nullable = false)
-    private String cardNumberMasked;     // "**** **** **** 3456"
+    private String cardNumberMasked;
 
     @Column(nullable = false)
     private String holderName;
