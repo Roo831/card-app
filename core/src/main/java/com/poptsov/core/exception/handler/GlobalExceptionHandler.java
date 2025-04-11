@@ -48,6 +48,7 @@ public class GlobalExceptionHandler {
             UsernameNotFoundException.class,
             IllegalArgumentException.class,
             AuthenticationException.class,
+            EntityNotFoundException.class
     })
 
     public ResponseEntity<Map<String, String>> handleCustomExceptions(RuntimeException ex) {
