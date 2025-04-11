@@ -7,7 +7,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
 
-@Mapper(componentModel = "spring")
+@Mapper(imports = {java.math.BigDecimal.class, java.time.LocalDate.class}, componentModel = "spring")
 public interface CardMapper {
     CardMapper INSTANCE = Mappers.getMapper(CardMapper.class);
 

@@ -1,4 +1,4 @@
-package com.poptsov.auth.repository;
+package com.poptsov.core.repository;
 
 
 import com.poptsov.core.model.User;

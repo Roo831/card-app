@@ -1,6 +1,6 @@
 package com.poptsov.cards.service;
 
-import com.poptsov.auth.repository.UserRepository;
+import com.poptsov.core.repository.UserRepository;
 import com.poptsov.cards.repository.CardRepository;
 import com.poptsov.core.dto.CardCreateDto;
 import com.poptsov.core.dto.CardResponseDto;
