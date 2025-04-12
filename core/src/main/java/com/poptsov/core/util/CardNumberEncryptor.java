@@ -5,16 +5,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.Cipher;
-import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 
 @Component
 public class CardNumberEncryptor {
     @Value("${AES-256-key}")
-    private static final String SECRET_KEY = "secret";
+    private String SECRET_KEY = "secret";
 
     private static final String ALGORITHM = "AES";
 
