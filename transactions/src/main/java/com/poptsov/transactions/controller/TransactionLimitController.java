@@ -1,4 +1,4 @@
-ackage com.poptsov.transactions.controller;
+package com.poptsov.transactions.controller;
 
 import com.poptsov.core.dto.SetLimitRequestDto;
 import com.poptsov.transactions.service.TransactionLimitService;
