@@ -9,11 +9,7 @@ import org.mapstruct.factory.Mappers;
 
 @Mapper(componentModel = "spring")
 public interface CardMapper {
-
+    @Mapping(source = "cardNumberMasked", target = "maskedNumber")
     CardResponseDto toResponseDto(Card card);
 
-    // Если преобразование не нужно, можно удалить
-    default Card toEntity(CardCreateDto dto) {
-        return null;
-    }
 }

@@ -32,7 +32,26 @@ public class Card {
     private BigDecimal balance;
 
     @Column(nullable = false)
-    private String status;
+    private CardStatus status;
+
+    public Card(Long id, User user, String cardNumberEncrypted, String cardNumberMasked, String holderName, LocalDate expirationDate, BigDecimal balance, CardStatus status) {
+        this.id = id;
+        this.user = user;
+        this.cardNumberEncrypted = cardNumberEncrypted;
+        this.cardNumberMasked = cardNumberMasked;
+        this.holderName = holderName;
+        this.expirationDate = expirationDate;
+        this.balance = balance;
+        this.status = status;
+    }
+
+    public Card() {
+    }
+
+    public static CardBuilder builder() {
+        return new CardBuilder();
+    }
+
 
     public Long getId() {
         return id;
@@ -90,11 +109,74 @@ public class Card {
         this.balance = balance;
     }
 
-    public String getStatus() {
+    public CardStatus getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(CardStatus status) {
         this.status = status;
+    }
+
+
+    public static class CardBuilder {
+        private Long id;
+        private User user;
+        private String cardNumberEncrypted;
+        private String cardNumberMasked;
+        private String holderName;
+        private LocalDate expirationDate;
+        private BigDecimal balance;
+        private CardStatus status;
+
+        CardBuilder() {
+        }
+
+        public CardBuilder id(Long id) {
+            this.id = id;
+            return this;
+        }
+
+        public CardBuilder user(User user) {
+            this.user = user;
+            return this;
+        }
+
+        public CardBuilder cardNumberEncrypted(String cardNumberEncrypted) {
+            this.cardNumberEncrypted = cardNumberEncrypted;
+            return this;
+        }
+
+        public CardBuilder cardNumberMasked(String cardNumberMasked) {
+            this.cardNumberMasked = cardNumberMasked;
+            return this;
+        }
+
+        public CardBuilder holderName(String holderName) {
+            this.holderName = holderName;
+            return this;
+        }
+
+        public CardBuilder expirationDate(LocalDate expirationDate) {
+            this.expirationDate = expirationDate;
+            return this;
+        }
+
+        public CardBuilder balance(BigDecimal balance) {
+            this.balance = balance;
+            return this;
+        }
+
+        public CardBuilder status(CardStatus status) {
+            this.status = status;
+            return this;
+        }
+
+        public Card build() {
+            return new Card(this.id, this.user, this.cardNumberEncrypted, this.cardNumberMasked, this.holderName, this.expirationDate, this.balance, this.status);
+        }
+
+        public String toString() {
+            return "Card.CardBuilder(id=" + this.id + ", user=" + this.user + ", cardNumberEncrypted=" + this.cardNumberEncrypted + ", cardNumberMasked=" + this.cardNumberMasked + ", holderName=" + this.holderName + ", expirationDate=" + this.expirationDate + ", balance=" + this.balance + ", status=" + this.status + ")";
+        }
     }
 }

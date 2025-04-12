@@ -1,14 +1,16 @@
 package com.poptsov.cards.controller;
 
 import com.poptsov.core.dto.CardCreateDto;
-import com.poptsov.core.dto.CardResponseDto;
-import com.poptsov.core.model.User;
 import com.poptsov.cards.service.CardService;
+import com.poptsov.core.dto.CardResponseDto;
+import com.poptsov.core.dto.CardStatusUpdateRequestDto;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,7 +19,6 @@ import java.util.List;
 @RequestMapping("/api/cards")
 
 public class CardController {
-
     private final CardService cardService;
 
     @Autowired
@@ -25,40 +26,48 @@ public class CardController {
         this.cardService = cardService;
     }
 
+
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasRole('ADMIN')")
-    public CardResponseDto createCard(
-            @RequestBody @Valid CardCreateDto dto,
-            @AuthenticationPrincipal User currentUser) {
-        return cardService.createCard(dto, currentUser.getId());
+    public ResponseEntity<CardResponseDto> createCard(@Valid @RequestBody CardCreateDto request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(cardService.createCard(request));
     }
 
-    @GetMapping
-    public List<CardResponseDto> getUserCards(
-            @AuthenticationPrincipal User currentUser) {
-        return cardService.getUserCards(currentUser.getId());
-    }
-
-    @GetMapping("/{id}")
-    public CardResponseDto getCard(
-            @PathVariable Long id,
-            @AuthenticationPrincipal User currentUser) {
-        return cardService.getCardForUser(id, currentUser.getId());
-    }
-
-    @PatchMapping("/{id}/block")
-    public CardResponseDto blockCard(
-            @PathVariable Long id,
-            @AuthenticationPrincipal User currentUser) {
-        return cardService.blockCard(id, currentUser.getId());
-    }
-
-    @PatchMapping("/{id}/activate")
+    @GetMapping("/admin")
     @PreAuthorize("hasRole('ADMIN')")
-    public CardResponseDto activateCard(
-            @PathVariable Long id,
-            @AuthenticationPrincipal User currentUser) {
-        return cardService.activateCard(id, currentUser.getId());
+    public ResponseEntity<Page<CardResponseDto>> getAllCards(
+            @RequestParam(required = false) String status,
+            Pageable pageable) {
+        return ResponseEntity.ok(cardService.getAllCards(status, pageable));
     }
+
+    @PostMapping("/admin/{cardId}/status")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<CardResponseDto> changeCardStatus(
+            @PathVariable Long cardId,
+            @Valid @RequestBody CardStatusUpdateRequestDto request) {
+        return ResponseEntity.ok(cardService.changeCardStatus(cardId, request.status()));
+    }
+
+    // USER endpoints
+    @GetMapping("/my")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<List<CardResponseDto>> getUserCards() {
+        return ResponseEntity.ok(cardService.getUserCards());
+    }
+
+    @PostMapping("/my/{cardId}/block")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<CardResponseDto> userBlockCard(@PathVariable Long cardId) {
+        return ResponseEntity.ok(cardService.userBlockCard(cardId));
+    }
+
+//    @GetMapping("/my/{cardId}/transactions")
+//    @PreAuthorize("hasRole('USER')")
+//    public ResponseEntity<Page<TransactionResponse>> getCardTransactions(
+//            @PathVariable Long cardId,
+//            Pageable pageable) {
+//        return ResponseEntity.ok(cardService.getCardTransactions(cardId, pageable));
+//    }  // На данный момент нет реализации transaction модуля, метод закомментирован.
 }
