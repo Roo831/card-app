@@ -11,13 +11,13 @@ CREATE TABLE users (
 );
 
 CREATE TABLE cards (
-                       id SERIAL PRIMARY KEY,
-                       user_id INT NOT NULL,
+                       id BIGSERIAL PRIMARY KEY,
+                       user_id BIGINT NOT NULL,
                        card_number_encrypted VARCHAR(500) NOT NULL,
                        card_number_masked VARCHAR(19) NOT NULL,
                        holder_name VARCHAR(255) NOT NULL,
                        expiration_date DATE NOT NULL,
-                       status VARCHAR(20) NOT NULL CHECK (status IN ('ACTIVE', 'BLOCKED', 'EXPIRED')),
+                       status VARCHAR(50) NOT NULL CHECK (status IN ('ACTIVE', 'BLOCKED', 'EXPIRED')),
                        balance DECIMAL(15,2) NOT NULL DEFAULT 0.00,
                        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
                        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -25,7 +25,7 @@ CREATE TABLE cards (
 );
 
 CREATE TABLE transaction_limits (
-                                    id SERIAL PRIMARY KEY,
+                                    id BIGSERIAL PRIMARY KEY,
                                     card_id INT NOT NULL,
                                     limit_type VARCHAR(20) NOT NULL CHECK (limit_type IN ('DAILY', 'MONTHLY')),
                                     amount DECIMAL(15,2) NOT NULL,
@@ -36,7 +36,7 @@ CREATE TABLE transaction_limits (
 );
 
 CREATE TABLE transactions (
-                              id SERIAL PRIMARY KEY,
+                              id BIGSERIAL PRIMARY KEY,
                               source_card_id INT NOT NULL,
                               target_card_id INT,
                               amount DECIMAL(15,2) NOT NULL,

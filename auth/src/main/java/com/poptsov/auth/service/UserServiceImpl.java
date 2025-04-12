@@ -1,13 +1,12 @@
 package com.poptsov.auth.service;
 
-import com.poptsov.auth.repository.UserRepository;
+import com.poptsov.core.repository.UserRepository;
 import com.poptsov.core.dto.RegisterDto;
 import com.poptsov.core.model.Role;
 import com.poptsov.core.model.User;
 import jakarta.persistence.EntityExistsException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
