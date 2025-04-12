@@ -57,7 +57,7 @@ public class CardController {
         return ResponseEntity.ok(cardService.getUserCards());
     }
 
-    @PostMapping("/my/{cardId}/block")
+    @PostMapping("/{cardId}/block")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<CardResponseDto> userBlockCard(@PathVariable Long cardId) {
         return ResponseEntity.ok(cardService.userBlockCard(cardId));
