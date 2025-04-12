@@ -4,6 +4,10 @@ import com.poptsov.core.dto.CardCreateDto;
 import com.poptsov.cards.service.CardService;
 import com.poptsov.core.dto.CardResponseDto;
 import com.poptsov.core.dto.CardStatusUpdateRequestDto;
+import com.poptsov.core.dto.TransactionResponseDto;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -26,7 +30,12 @@ public class CardController {
         this.cardService = cardService;
     }
 
-
+    @Operation(summary = "Create a new card", description = "Available only for ADMIN")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Card created"),
+            @ApiResponse(responseCode = "400", description = "Invalid input"),
+            @ApiResponse(responseCode = "403", description = "Forbidden")
+    })
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<CardResponseDto> createCard(@Valid @RequestBody CardCreateDto request) {
@@ -63,11 +72,11 @@ public class CardController {
         return ResponseEntity.ok(cardService.userBlockCard(cardId));
     }
 
-//    @GetMapping("/my/{cardId}/transactions")
-//    @PreAuthorize("hasRole('USER')")
-//    public ResponseEntity<Page<TransactionResponse>> getCardTransactions(
-//            @PathVariable Long cardId,
-//            Pageable pageable) {
-//        return ResponseEntity.ok(cardService.getCardTransactions(cardId, pageable));
-//    }  // На данный момент нет реализации transaction модуля, метод закомментирован.
+    @GetMapping("/my/{cardId}/transactions")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Page<TransactionResponseDto>> getCardTransactions(
+            @PathVariable Long cardId,
+            Pageable pageable) {
+        return ResponseEntity.ok(cardService.getCardTransactions(cardId, pageable));
+    }
 }

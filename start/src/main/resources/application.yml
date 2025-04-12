@@ -23,3 +23,7 @@ jwt:
   expiration: 86400000 # 24h
 
 AES-256-key: 6bc1bee22e409f96e93d7e117393172a
+
+springdoc:
+  swagger-ui.enabled: true
+  path: /swagger-ui.html
