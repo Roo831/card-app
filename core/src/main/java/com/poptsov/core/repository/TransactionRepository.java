@@ -1,4 +1,4 @@
-package com.poptsov.transactions.repository;
+package com.poptsov.core.repository;
 
 
 import com.poptsov.core.model.Transaction;
@@ -10,4 +10,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
     Page<Transaction> findBySourceCardIdOrTargetCardId(Long sourceCardId, Long targetCardId, Pageable pageable);
+    Page<Transaction> findBySourceCardId(Long sourceCardId, Pageable pageable);
+
 }

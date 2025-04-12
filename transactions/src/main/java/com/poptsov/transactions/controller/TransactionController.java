@@ -2,7 +2,7 @@ package com.poptsov.transactions.controller;
 
 import com.poptsov.core.dto.TransactionResponseDto;
 import com.poptsov.core.dto.TransferRequestDto;
-import com.poptsov.transactions.service.TransactionService;
+import com.poptsov.transactions.service.TransactionServiceImpl;
 import jakarta.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,10 +17,10 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/transactions")
 public class TransactionController {
 
-    private final TransactionService transactionService;
+    private final TransactionServiceImpl transactionService;
 
     @Autowired
-    public TransactionController(TransactionService transactionService) {
+    public TransactionController(TransactionServiceImpl transactionService) {
         this.transactionService = transactionService;
     }
 
