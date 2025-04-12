@@ -48,9 +48,9 @@ public class GlobalExceptionHandler {
             UsernameNotFoundException.class,
             IllegalArgumentException.class,
             AuthenticationException.class,
-            EntityNotFoundException.class
+            EntityNotFoundException.class,
+            IllegalStateException.class
     })
-
     public ResponseEntity<Map<String, String>> handleCustomExceptions(RuntimeException ex) {
         return createErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST);
     }

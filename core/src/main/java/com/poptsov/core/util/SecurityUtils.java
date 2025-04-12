@@ -11,9 +11,15 @@ public class SecurityUtils {
 
     public static User getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.isAuthenticated()) {
-            return (User) authentication.getPrincipal();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new EntityNotFoundException("User not authenticated");
         }
-        throw new EntityNotFoundException("User not found");
+
+        Object principal = authentication.getPrincipal();
+        if (!(principal instanceof User)) {
+            throw new EntityNotFoundException("Invalid user principal");
+        }
+
+        return (User) principal;
     }
 }

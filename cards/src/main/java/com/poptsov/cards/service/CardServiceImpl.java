@@ -82,6 +82,10 @@ public class CardServiceImpl implements CardService {
         Card card = cardRepository.findById(cardId)
                 .orElseThrow(() -> new CardNotFoundException(cardId));
 
+        if (newStatus == CardStatus.ACTIVE && card.getExpirationDate().isBefore(LocalDate.now())) {
+            throw new IllegalStateException("Cannot activate expired card");
+        }
+
         card.setStatus(newStatus);
         return cardMapper.toResponseDto(card);
     }
