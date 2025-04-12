@@ -26,7 +26,7 @@ CREATE TABLE cards (
 
 CREATE TABLE transaction_limits (
                                     id BIGSERIAL PRIMARY KEY,
-                                    card_id INT NOT NULL,
+                                    card_id BIGINT NOT NULL,
                                     limit_type VARCHAR(20) NOT NULL CHECK (limit_type IN ('DAILY', 'MONTHLY')),
                                     amount DECIMAL(15,2) NOT NULL,
                                     reset_period TIMESTAMP WITH TIME ZONE NOT NULL,
@@ -37,10 +37,10 @@ CREATE TABLE transaction_limits (
 
 CREATE TABLE transactions (
                               id BIGSERIAL PRIMARY KEY,
-                              source_card_id INT NOT NULL,
-                              target_card_id INT,
+                              source_card_id BIGINT NOT NULL,
+                              target_card_id BIGINT,
                               amount DECIMAL(15,2) NOT NULL,
-                              transaction_type VARCHAR(20) NOT NULL CHECK (transaction_type IN ('TRANSFER', 'PAYMENT', 'REFUND')),
+                              type VARCHAR(20) NOT NULL CHECK (type IN ('TRANSFER', 'PAYMENT', 'REFUND')),
                               status VARCHAR(20) NOT NULL CHECK (status IN ('PENDING', 'COMPLETED', 'FAILED')),
                               description VARCHAR(500),
                               created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,

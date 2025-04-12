@@ -5,7 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
-@EnableJpaRepositories(basePackages = {"com.poptsov.core.repository", "com.poptsov.cards.repository"})
+@EnableJpaRepositories(basePackages = {"com.poptsov.core.repository", "com.poptsov.core.repository", "com.poptsov.transactions.repository"})
 @SpringBootApplication(scanBasePackages = {
         "com.poptsov.auth",
         "com.poptsov.core",

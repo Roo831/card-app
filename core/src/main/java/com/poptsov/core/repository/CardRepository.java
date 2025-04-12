@@ -1,4 +1,4 @@
-package com.poptsov.cards.repository;
+package com.poptsov.core.repository;
 
 import com.poptsov.core.model.Card;
 import com.poptsov.core.model.CardStatus;
