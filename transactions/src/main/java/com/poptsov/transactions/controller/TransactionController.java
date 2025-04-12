@@ -30,7 +30,7 @@ public class TransactionController {
         this.transactionService = transactionService;
     }
 
-    @Operation(summary = "Перевод между картами", description = "Доступно только для USER")
+    @Operation(summary = "Перевод между картами", description = "Доступно для USER, ADMIN")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Перевод успешно выполнен",
                     content = @Content(schema = @Schema(implementation = TransactionResponseDto.class))),
@@ -40,7 +40,7 @@ public class TransactionController {
             @ApiResponse(responseCode = "422", description = "Недостаточно средств или превышен лимит")
     })
     @PostMapping("/transfer")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<TransactionResponseDto> transfer(
             @Valid @RequestBody TransferRequestDto request
     ) {
@@ -49,7 +49,7 @@ public class TransactionController {
                 .body(transactionService.transferBetweenCards(request));
     }
 
-    @Operation(summary = "Получение истории транзакций", description = "Доступно только для USER")
+    @Operation(summary = "Получение истории транзакций", description = "Доступно для USER, ADMIN")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Успешно получено",
                     content = @Content(schema = @Schema(implementation = Page.class))),
@@ -57,7 +57,7 @@ public class TransactionController {
             @ApiResponse(responseCode = "404", description = "Карта не найдена")
     })
     @GetMapping("/history")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<Page<TransactionResponseDto>> getHistory(
             @RequestParam Long cardId,
             Pageable pageable
