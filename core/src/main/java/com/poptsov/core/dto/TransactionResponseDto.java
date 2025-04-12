@@ -11,6 +11,8 @@ public record TransactionResponseDto(
         String sourceCardMask,
         String targetCardMask,
         BigDecimal amount,
-        TransactionType type,
-        TransactionStatus status,
-        LocalDateTime createdAt) {}
+        String type,
+        String status,
+        String description,
+        LocalDateTime createdAt
+) {}
