@@ -32,6 +32,7 @@ public class Card {
     private BigDecimal balance;
 
     @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
     private CardStatus status;
 
     public Card(Long id, User user, String cardNumberEncrypted, String cardNumberMasked, String holderName, LocalDate expirationDate, BigDecimal balance, CardStatus status) {
