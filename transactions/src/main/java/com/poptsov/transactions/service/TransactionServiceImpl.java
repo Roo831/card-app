@@ -27,19 +27,20 @@ public class TransactionServiceImpl implements TransactionService {
     private final CardRepository cardRepository;
     private final TransactionMapper transactionMapper;
     private final CardNumberEncryptor cardNumberEncryptor;
+    private final TransactionLimitService transactionLimitService;
 
 
     @Autowired
-    public TransactionServiceImpl(TransactionRepository transactionRepository, CardRepository cardRepository, TransactionMapper transactionMapper, CardNumberEncryptor cardNumberEncryptor) {
+    public TransactionServiceImpl(TransactionRepository transactionRepository, CardRepository cardRepository, TransactionMapper transactionMapper, CardNumberEncryptor cardNumberEncryptor, TransactionLimitService transactionLimitService) {
         this.transactionRepository = transactionRepository;
         this.cardRepository = cardRepository;
         this.transactionMapper = transactionMapper;
         this.cardNumberEncryptor = cardNumberEncryptor;
+        this.transactionLimitService = transactionLimitService;
     }
 
     @Transactional
     public TransactionResponseDto transferBetweenCards(TransferRequestDto request) {
-        // 1. Проверка принадлежности карт пользователю
         Long userId = SecurityUtils.getCurrentUser().getId();
         Card sourceCard = cardRepository.findByIdAndUserId(request.sourceCardId(), userId)
                 .orElseThrow(() -> new CardAccessDeniedException(request.sourceCardId()));
@@ -47,19 +48,19 @@ public class TransactionServiceImpl implements TransactionService {
         Card targetCard = cardRepository.findById(request.targetCardId())
                 .orElseThrow(() -> new CardNotFoundException(request.targetCardId()));
 
-        // 2. Проверка баланса
+        transactionLimitService.checkLimit(request.sourceCardId(), request.amount(), LimitType.DAILY);
+        transactionLimitService.checkLimit(request.sourceCardId(), request.amount(), LimitType.MONTHLY);
+
         if (sourceCard.getBalance().compareTo(request.amount()) < 0) {
             throw new InsufficientFundsException("Not enough money on the card");
         }
 
-        // 3. Обновление балансов
         sourceCard.setBalance(sourceCard.getBalance().subtract(request.amount()));
         targetCard.setBalance(targetCard.getBalance().add(request.amount()));
 
         cardRepository.save(sourceCard);
         cardRepository.save(targetCard);
 
-        // 4. Создание транзакции
         Transaction transaction = Transaction.builder()
                 .sourceCard(sourceCard)
                 .targetCard(targetCard)
@@ -71,7 +72,6 @@ public class TransactionServiceImpl implements TransactionService {
 
         Transaction savedTransaction = transactionRepository.save(transaction);
 
-        // 5. Маппинг через MapStruct
         return transactionMapper.toResponseDto(savedTransaction, cardNumberEncryptor);
     }
 
