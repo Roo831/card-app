@@ -2,6 +2,13 @@ server:
   port: 8081
   address: 0.0.0.0
 spring:
+  mvc:
+    static-path-pattern: /**
+  web:
+    resources:
+      static-locations:
+        - classpath:/static/
+        - classpath:/META-INF/resources/
   datasource:
     url: jdbc:postgresql://localhost:5433/card-db
     username: postgres
@@ -25,5 +32,7 @@ jwt:
 AES-256-key: 6bc1bee22e409f96e93d7e117393172a
 
 springdoc:
-  swagger-ui.enabled: true
-  path: /swagger-ui.html
+  swagger-ui:
+    path: /swagger-ui.html
+    url: /v3/api-docs
+    enabled: true
