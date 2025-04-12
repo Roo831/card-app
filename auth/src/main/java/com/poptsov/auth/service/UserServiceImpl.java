@@ -31,13 +31,13 @@ public class UserServiceImpl implements UserService {
     }
 
     public User createUser(RegisterDto request) {
-        if (userRepository.existsByEmail(request.getEmail())) {
+        if (userRepository.existsByEmail(request.email())) {
             throw new EntityExistsException("Email already in use");
         }
 
         var user = User.builder()
-                .email(request.getEmail())
-                .password(passwordEncoder.encode(request.getPassword()))
+                .email(request.email())
+                .password(passwordEncoder.encode(request.password()))
                 .role(Role.USER)
                 .build();
         return userRepository.save(user);

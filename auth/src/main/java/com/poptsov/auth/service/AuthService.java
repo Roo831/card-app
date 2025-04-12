@@ -27,18 +27,18 @@ public class AuthService {
     public AuthResponse register(RegisterDto request) {
         var user = userService.createUser(request);
         var token = jwtService.generateToken(user);
-        return AuthResponse.builder().token(token).build();
+        return new AuthResponse(token);
     }
 
     public AuthResponse authenticate(AuthRequest request) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
-                        request.getEmail(),
-                        request.getPassword()
+                        request.email(),
+                        request.password()
                 )
         );
-        var user = userService.loadUserByUsername(request.getEmail());
+        var user = userService.loadUserByUsername(request.email());
         var token = jwtService.generateToken(user);
-        return AuthResponse.builder().token(token).build();
+        return new AuthResponse(token);
     }
 }
