@@ -6,6 +6,8 @@ import com.poptsov.core.model.*;
 import com.poptsov.core.repository.CardRepository;
 import com.poptsov.core.repository.TransactionLimitRepository;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +22,7 @@ public class TransactionLimitServiceImpl implements TransactionLimitService {
 
     private final TransactionLimitRepository limitRepository;
     private final CardRepository cardRepository;
+    private static final Logger log = LoggerFactory.getLogger(TransactionLimitServiceImpl.class);
 
     @Autowired
     public TransactionLimitServiceImpl(TransactionLimitRepository limitRepository, CardRepository cardRepository) {
@@ -29,10 +32,15 @@ public class TransactionLimitServiceImpl implements TransactionLimitService {
 
     @Transactional
     public void setLimit(SetLimitRequestDto request) {
+        log.info("Setting {} limit for card ID: {}", request.limitType(), request.cardId());
         Card card = cardRepository.findById(request.cardId())
-                .orElseThrow(() -> new CardNotFoundException(request.cardId()));
+                .orElseThrow(() -> {
+                    log.error("Card not found with ID: {}", request.cardId());
+                    return new CardNotFoundException(request.cardId());
+                });
 
         LocalDateTime resetPeriod = calculateResetPeriod(request.limitType());
+        log.debug("Calculated reset period: {}", resetPeriod);
 
         limitRepository.findByCardIdAndLimitType(request.cardId(), request.limitType())
                 .ifPresentOrElse(
@@ -40,6 +48,7 @@ public class TransactionLimitServiceImpl implements TransactionLimitService {
                             limit.setAmount(request.amount());
                             limit.setResetPeriod(resetPeriod);
                             limitRepository.save(limit);
+                            log.info("Updated existing limit for card ID: {}", request.cardId());
                         },
                         () -> {
                             TransactionLimit newLimit = TransactionLimit.builder()
@@ -49,22 +58,31 @@ public class TransactionLimitServiceImpl implements TransactionLimitService {
                                     .resetPeriod(resetPeriod)
                                     .build();
                             limitRepository.save(newLimit);
+                            log.info("Created new limit for card ID: {}", request.cardId());
                         }
                 );
     }
 
     @Transactional(readOnly = true)
     public void checkLimit(Long cardId, BigDecimal amount, LimitType limitType) {
+        log.debug("Checking {} limit for card ID: {}", limitType, cardId);
         TransactionLimit limit = limitRepository.findByCardIdAndLimitType(cardId, limitType)
-                .orElseThrow(() -> new LimitNotSetException(limitType));
+                .orElseThrow(() -> {
+                    log.warn("{} limit not set for card ID: {}", limitType, cardId);
+                    return new LimitNotSetException(limitType);
+                });
 
         if (limit.getResetPeriod().isBefore(LocalDateTime.now())) {
+            log.warn("{} limit expired for card ID: {}", limitType, cardId);
             throw new LimitExpiredException(limitType);
         }
 
         if (limit.getAmount().compareTo(amount) < 0) {
+            log.warn("{} limit exceeded for card ID: {} (limit: {}, attempted: {})",
+                    limitType, cardId, limit.getAmount(), amount);
             throw new LimitExceededException(limitType, limit.getAmount());
         }
+        log.debug("Limit check passed for card ID: {}", cardId);
     }
 
     private LocalDateTime calculateResetPeriod(LimitType limitType) {

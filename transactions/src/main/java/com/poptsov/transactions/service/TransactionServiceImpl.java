@@ -15,6 +15,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.poptsov.core.util.SecurityUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -22,6 +24,7 @@ import java.util.stream.Collectors;
 
 @Service
 public class TransactionServiceImpl implements TransactionService {
+    private static final Logger log = LoggerFactory.getLogger(TransactionServiceImpl.class);
 
     private final TransactionRepository transactionRepository;
     private final CardRepository cardRepository;
@@ -41,17 +44,40 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Transactional
     public TransactionResponseDto transferBetweenCards(TransferRequestDto request) {
+        log.info("Initiating transfer from card {} to card {} for amount {}",
+                request.sourceCardId(), request.targetCardId(), request.amount());
+
         Long userId = SecurityUtils.getCurrentUser().getId();
+        log.debug("Current user ID: {}", userId);
+
         Card sourceCard = cardRepository.findByIdAndUserId(request.sourceCardId(), userId)
-                .orElseThrow(() -> new CardAccessDeniedException(request.sourceCardId()));
+                .orElseThrow(() -> {
+                    log.error("User {} doesn't have access to source card {}", userId, request.sourceCardId());
+                    return new CardAccessDeniedException(request.sourceCardId());
+                });
+
+        log.debug("Source card found: {}", sourceCard.getId());
 
         Card targetCard = cardRepository.findById(request.targetCardId())
-                .orElseThrow(() -> new CardNotFoundException(request.targetCardId()));
+                .orElseThrow(() -> {
+                    log.error("Target card not found: {}", request.targetCardId());
+                    return new CardNotFoundException(request.targetCardId());
+                });
 
-        transactionLimitService.checkLimit(request.sourceCardId(), request.amount(), LimitType.DAILY);
-        transactionLimitService.checkLimit(request.sourceCardId(), request.amount(), LimitType.MONTHLY);
+        log.debug("Target card found: {}", targetCard.getId());
+
+        try {
+            transactionLimitService.checkLimit(request.sourceCardId(), request.amount(), LimitType.DAILY);
+            transactionLimitService.checkLimit(request.sourceCardId(), request.amount(), LimitType.MONTHLY);
+            log.debug("Limit checks passed for card {}", request.sourceCardId());
+        } catch (LimitNotSetException | LimitExceededException | LimitExpiredException e) {
+            log.warn("Limit violation for card {}: {}", request.sourceCardId(), e.getMessage());
+            throw e;
+        }
 
         if (sourceCard.getBalance().compareTo(request.amount()) < 0) {
+            log.error("Insufficient funds on card {}. Balance: {}, Requested: {}",
+                    sourceCard.getId(), sourceCard.getBalance(), request.amount());
             throw new InsufficientFundsException("Not enough money on the card");
         }
 
@@ -60,6 +86,7 @@ public class TransactionServiceImpl implements TransactionService {
 
         cardRepository.save(sourceCard);
         cardRepository.save(targetCard);
+        log.debug("Balances updated - Source: {}, Target: {}", sourceCard.getBalance(), targetCard.getBalance());
 
         Transaction transaction = Transaction.builder()
                 .sourceCard(sourceCard)
@@ -71,18 +98,24 @@ public class TransactionServiceImpl implements TransactionService {
                 .build();
 
         Transaction savedTransaction = transactionRepository.save(transaction);
+        log.info("Transaction completed successfully. Transaction ID: {}", savedTransaction.getId());
 
         return transactionMapper.toResponseDto(savedTransaction, cardNumberEncryptor);
     }
-
     @Transactional(readOnly = true)
     public Page<TransactionResponseDto> getCardTransactions(Long cardId, Pageable pageable) {
         Long userId = SecurityUtils.getCurrentUser().getId();
+        log.debug("Getting transactions for cardId: {}, userId: {}", cardId, userId);
+
         if (!cardRepository.existsByIdAndUserId(cardId, userId)) {
+            log.warn("Card access denied for cardId: {}, userId: {}", cardId, userId);
             throw new CardAccessDeniedException(cardId);
         }
 
-        return convertToDtoPage(transactionRepository.findBySourceCardIdOrTargetCardId(cardId, cardId, pageable), cardNumberEncryptor);
+        Page<Transaction> transactions = transactionRepository.findBySourceCardIdOrTargetCardId(cardId, cardId, pageable);
+        log.debug("Found {} transactions", transactions.getTotalElements());
+
+        return convertToDtoPage(transactions, cardNumberEncryptor);
     }
 
     public Page<TransactionResponseDto> convertToDtoPage(Page<Transaction> transactions, CardNumberEncryptor cardNumberEncryptor) {

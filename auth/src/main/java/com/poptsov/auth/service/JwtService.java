@@ -7,6 +7,8 @@ import io.jsonwebtoken.Jwts;
 import java.security.Key;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -23,8 +25,10 @@ public class JwtService {
     private String secretKey;
     @Value("${jwt.expiration}")
     private Long expiration;
+    private static final Logger log = LoggerFactory.getLogger(JwtService.class);
 
     public String generateToken(UserDetails userDetails) {
+        log.debug("Generating token for user: {}", userDetails.getUsername());
         Map<String, Object> claims = new HashMap<>();
         if (userDetails instanceof User user) {
             claims.put("id", user.getId());
@@ -49,6 +53,7 @@ public class JwtService {
     }
 
     public boolean isTokenValid(String token, UserDetails userDetails) {
+        log.debug("Validating token for user: {}", userDetails.getUsername());
         final String email = extractEmail(token);
         return (email.equals(userDetails.getUsername())) && !isTokenExpired(token);
     }
