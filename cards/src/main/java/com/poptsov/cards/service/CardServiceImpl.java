@@ -19,6 +19,8 @@ import com.poptsov.core.repository.UserRepository;
 import com.poptsov.core.util.CardNumberEncryptor;
 import com.poptsov.core.util.CardNumberGenerator;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -45,6 +47,8 @@ public class CardServiceImpl implements CardService {
     private final TransactionRepository transactionRepository;
     private final TransactionMapper transactionMapper;
 
+    private static final Logger log = LoggerFactory.getLogger(CardServiceImpl.class);
+
     @Autowired
     public CardServiceImpl(CardRepository cardRepository, UserRepository userRepository, CardMapper cardMapper, CardNumberGenerator numberGenerator, CardNumberEncryptor encryptor, TransactionRepository transactionRepository, TransactionMapper transactionMapper) {
         this.cardRepository = cardRepository;
@@ -58,10 +62,16 @@ public class CardServiceImpl implements CardService {
 
     @Override
     public CardResponseDto createCard(CardCreateDto request) {
+        log.info("Creating card for user ID: {}", request.userId());
         User user = userRepository.findById(request.userId())
-                .orElseThrow(() -> new UserNotFoundException(request.userId()));
+                .orElseThrow(() -> {
+                    log.error("User not found with ID: {}", request.userId());
+                    return new UserNotFoundException(request.userId());
+                });
 
         String cardNumber = numberGenerator.generate();
+        log.debug("Generated card number: {}", cardNumber);
+
         Card card = Card.builder()
                 .user(user)
                 .cardNumberEncrypted(encryptor.encrypt(cardNumber))
@@ -72,36 +82,56 @@ public class CardServiceImpl implements CardService {
                 .status(CardStatus.ACTIVE)
                 .build();
 
-        return cardMapper.toResponseDto(cardRepository.save(card));
+        Card savedCard = cardRepository.save(card);
+        log.info("Card created successfully with ID: {}", savedCard.getId());
+
+        return cardMapper.toResponseDto(savedCard);
     }
 
-    @Override
     @Transactional(readOnly = true)
     public Page<CardResponseDto> getAllCards(String status, Pageable pageable) {
-        return Optional.ofNullable(status)
-                .map(s -> cardRepository.findByStatus(CardStatus.valueOf(s), pageable))
-                .orElseGet(() -> cardRepository.findAll(pageable))
-                .map(cardMapper::toResponseDto);
+        log.debug("Fetching all cards with status: {}", status);
+
+        Page<Card> cards = Optional.ofNullable(status)
+                .map(s -> {
+                    log.trace("Filtering by status: {}", s);
+                    return cardRepository.findByStatus(CardStatus.valueOf(s), pageable);
+                })
+                .orElseGet(() -> {
+                    log.trace("No status filter applied");
+                    return cardRepository.findAll(pageable);
+                });
+
+        log.debug("Found {} cards", cards.getTotalElements());
+        return cards.map(cardMapper::toResponseDto);
     }
 
     @Override
     public CardResponseDto changeCardStatus(Long cardId, CardStatus newStatus) {
+        log.info("Changing status for card ID: {} to {}", cardId, newStatus);
         Card card = cardRepository.findById(cardId)
                 .orElseThrow(() -> new CardNotFoundException(cardId));
 
         if (newStatus == CardStatus.ACTIVE && card.getExpirationDate().isBefore(LocalDate.now())) {
+            log.warn("Attempt to activate expired card ID: {}", cardId);
             throw new IllegalStateException("Cannot activate expired card");
         }
 
         card.setStatus(newStatus);
+        log.info("Card status updated successfully for card ID: {}", cardId);
+
         return cardMapper.toResponseDto(card);
     }
 
-    @Override
     @Transactional(readOnly = true)
     public List<CardResponseDto> getUserCards() {
         Long userId = SecurityUtils.getCurrentUser().getId();
-        return cardRepository.findByUserId(userId).stream()
+        log.debug("Fetching cards for user ID: {}", userId);
+
+        List<Card> cards = cardRepository.findByUserId(userId);
+        log.debug("Found {} cards for user {}", cards.size(), userId);
+
+        return cards.stream()
                 .map(cardMapper::toResponseDto)
                 .toList();
     }
@@ -109,11 +139,19 @@ public class CardServiceImpl implements CardService {
     @Override
     public CardResponseDto userBlockCard(Long cardId) {
         Long userId = SecurityUtils.getCurrentUser().getId();
+        log.info("User ID: {} attempting to block card ID: {}", userId, cardId);
         Card card = cardRepository.findByIdAndUserId(cardId, userId)
-                .orElseThrow(() -> new CardAccessDeniedException(cardId));
+                .orElseThrow(() -> {
+                    log.warn("Access denied for user ID: {} to card ID: {}", userId, cardId);
+                    return new CardAccessDeniedException(cardId);
+                });
 
         card.setStatus(CardStatus.BLOCKED);
-        return cardMapper.toResponseDto(card);
+
+        Card blockedCard = cardRepository.save(card);
+        log.info("Card ID: {} blocked successfully by user ID: {}", cardId, userId);
+
+        return cardMapper.toResponseDto(blockedCard);
     }
 
     @Override

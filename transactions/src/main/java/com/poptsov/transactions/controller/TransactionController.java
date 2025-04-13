@@ -2,6 +2,7 @@ package com.poptsov.transactions.controller;
 
 import com.poptsov.core.dto.TransactionResponseDto;
 import com.poptsov.core.dto.TransferRequestDto;
+import com.poptsov.transactions.service.TransactionService;
 import com.poptsov.transactions.service.TransactionServiceImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -23,14 +24,14 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "Транзакции", description = "API для управления транзакциями")
 public class TransactionController {
 
-    private final TransactionServiceImpl transactionService;
+    private final TransactionService transactionService;
 
     @Autowired
-    public TransactionController(TransactionServiceImpl transactionService) {
+    public TransactionController(TransactionService transactionService) {
         this.transactionService = transactionService;
     }
 
-    @Operation(summary = "Перевод между картами", description = "Доступно только для USER")
+    @Operation(summary = "Перевод между картами. Доступен когда на обеих картах установлены месячный и суточный лимит.", description = "Доступно для USER, ADMIN")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Перевод успешно выполнен",
                     content = @Content(schema = @Schema(implementation = TransactionResponseDto.class))),
@@ -40,7 +41,7 @@ public class TransactionController {
             @ApiResponse(responseCode = "422", description = "Недостаточно средств или превышен лимит")
     })
     @PostMapping("/transfer")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<TransactionResponseDto> transfer(
             @Valid @RequestBody TransferRequestDto request
     ) {
@@ -49,7 +50,7 @@ public class TransactionController {
                 .body(transactionService.transferBetweenCards(request));
     }
 
-    @Operation(summary = "Получение истории транзакций", description = "Доступно только для USER")
+    @Operation(summary = "Получение истории транзакций", description = "Доступно для USER, ADMIN")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Успешно получено",
                     content = @Content(schema = @Schema(implementation = Page.class))),
@@ -57,7 +58,7 @@ public class TransactionController {
             @ApiResponse(responseCode = "404", description = "Карта не найдена")
     })
     @GetMapping("/history")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<Page<TransactionResponseDto>> getHistory(
             @RequestParam Long cardId,
             Pageable pageable

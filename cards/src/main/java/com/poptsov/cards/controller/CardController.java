@@ -77,19 +77,19 @@ public class CardController {
         return ResponseEntity.ok(cardService.changeCardStatus(cardId, request.status()));
     }
 
-    @Operation(summary = "Получение карт пользователя", description = "Доступно только для USER")
+    @Operation(summary = "Получение карт пользователя", description = "Доступно для USER, ADMIN")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Успешно получено",
                     content = @Content(schema = @Schema(implementation = List.class))),
             @ApiResponse(responseCode = "403", description = "Доступ запрещен")
     })
     @GetMapping("/my")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<List<CardResponseDto>> getUserCards() {
         return ResponseEntity.ok(cardService.getUserCards());
     }
 
-    @Operation(summary = "Блокировка карты пользователем", description = "Доступно только для USER")
+    @Operation(summary = "Блокировка карты пользователем", description = "Доступно для USER, ADMIN")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Карта успешно заблокирована",
                     content = @Content(schema = @Schema(implementation = CardResponseDto.class))),
@@ -97,12 +97,12 @@ public class CardController {
             @ApiResponse(responseCode = "404", description = "Карта не найдена")
     })
     @PostMapping("/{cardId}/block")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<CardResponseDto> userBlockCard(@PathVariable Long cardId) {
         return ResponseEntity.ok(cardService.userBlockCard(cardId));
     }
 
-    @Operation(summary = "Получение транзакций по карте", description = "Доступно только для USER")
+    @Operation(summary = "Получение транзакций по карте", description = "Доступно для USER, ADMIN")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Успешно получено",
                     content = @Content(schema = @Schema(implementation = Page.class))),
@@ -110,7 +110,7 @@ public class CardController {
             @ApiResponse(responseCode = "404", description = "Карта не найдена")
     })
     @GetMapping("/my/{cardId}/transactions")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<Page<TransactionResponseDto>> getCardTransactions(
             @PathVariable Long cardId,
             Pageable pageable) {
