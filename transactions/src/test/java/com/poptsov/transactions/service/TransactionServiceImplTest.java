@@ -14,6 +14,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
@@ -21,6 +23,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.context.SecurityContextImpl;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -125,5 +128,141 @@ class TransactionServiceImplTest {
 
         verify(cardRepository, never()).findById(any());
         verify(limitService, never()).checkLimit(any(), any(), any());
+    }
+
+    @Test
+    void transferBetweenCards_shouldThrowWhenSourceCardNotOwned() {
+        TransferRequestDto request = new TransferRequestDto(1L, 2L,
+                BigDecimal.valueOf(500), "Test transfer");
+
+        User user = new User();
+        user.setId(1L);
+        setupAuthenticatedUser(user);
+
+        when(cardRepository.findByIdAndUserId(1L, 1L)).thenReturn(Optional.empty());
+
+        assertThrows(CardAccessDeniedException.class,
+                () -> transactionService.transferBetweenCards(request));
+
+        verify(cardRepository, never()).findById(any());
+        verify(limitService, never()).checkLimit(any(), any(), any());
+    }
+
+    @Test
+    void transferBetweenCards_shouldThrowWhenTargetCardNotFound() {
+        TransferRequestDto request = new TransferRequestDto(1L, 2L,
+                BigDecimal.valueOf(500), "Test transfer");
+
+        User user = new User();
+        user.setId(1L);
+        Card sourceCard = new Card();
+        sourceCard.setId(1L);
+        sourceCard.setUser(user);
+        sourceCard.setBalance(BigDecimal.valueOf(1000));
+
+        when(cardRepository.findByIdAndUserId(1L, 1L)).thenReturn(Optional.of(sourceCard));
+        when(cardRepository.findById(2L)).thenReturn(Optional.empty());
+
+        setupAuthenticatedUser(user);
+
+        assertThrows(CardNotFoundException.class,
+                () -> transactionService.transferBetweenCards(request));
+
+        verify(limitService, never()).checkLimit(any(), any(), any());
+    }
+    @Test
+    void transferBetweenCards_shouldThrowWhenDailyLimitExceeded() {
+        TransferRequestDto request = new TransferRequestDto(1L, 2L,
+                BigDecimal.valueOf(500), "Test transfer");
+
+        User user = new User();
+        user.setId(1L);
+        Card sourceCard = new Card();
+        sourceCard.setId(1L);
+        sourceCard.setUser(user);
+        sourceCard.setBalance(BigDecimal.valueOf(1000));
+
+        Card targetCard = new Card();
+        targetCard.setId(2L);
+
+        when(cardRepository.findByIdAndUserId(1L, 1L)).thenReturn(Optional.of(sourceCard));
+        when(cardRepository.findById(2L)).thenReturn(Optional.of(targetCard));
+        doThrow(new LimitExceededException(LimitType.DAILY, BigDecimal.valueOf(400)))
+                .when(limitService).checkLimit(1L, BigDecimal.valueOf(500), LimitType.DAILY);
+
+        setupAuthenticatedUser(user);
+
+        assertThrows(LimitExceededException.class,
+                () -> transactionService.transferBetweenCards(request));
+
+        verify(limitService, never()).checkLimit(any(), any(), LimitType.MONTHLY);
+    }
+    @Test
+    void transferBetweenCards_shouldThrowWhenMonthlyLimitExpired() {
+        TransferRequestDto request = new TransferRequestDto(1L, 2L,
+                BigDecimal.valueOf(500), "Test transfer");
+
+        User user = new User();
+        user.setId(1L);
+        Card sourceCard = new Card();
+        sourceCard.setId(1L);
+        sourceCard.setUser(user);
+        sourceCard.setBalance(BigDecimal.valueOf(1000));
+
+        Card targetCard = new Card();
+        targetCard.setId(2L);
+
+        when(cardRepository.findByIdAndUserId(1L, 1L)).thenReturn(Optional.of(sourceCard));
+        when(cardRepository.findById(2L)).thenReturn(Optional.of(targetCard));
+        doThrow(new LimitExpiredException(LimitType.MONTHLY))
+                .when(limitService).checkLimit(1L, BigDecimal.valueOf(500), LimitType.MONTHLY);
+
+        setupAuthenticatedUser(user);
+
+        assertThrows(LimitExpiredException.class,
+                () -> transactionService.transferBetweenCards(request));
+
+        verify(limitService).checkLimit(1L, BigDecimal.valueOf(500), LimitType.DAILY);
+    }
+    @Test
+    void getCardTransactions_shouldReturnTransactions() {
+        Long cardId = 1L;
+        Long userId = 1L;
+        Pageable pageable = Pageable.unpaged();
+
+        User user = new User();
+        user.setId(userId);
+
+        when(cardRepository.existsByIdAndUserId(cardId, userId)).thenReturn(true);
+        when(transactionRepository.findBySourceCardIdOrTargetCardId(cardId, cardId, pageable))
+                .thenReturn(new PageImpl<>(List.of(new Transaction())));
+        when(transactionMapper.toResponseDto(any(), any()))
+                .thenReturn(new TransactionResponseDto(1L, "****1234", "****5678",
+                        BigDecimal.TEN, "TRANSFER", "COMPLETED", "Test", null));
+
+        setupAuthenticatedUser(user);
+
+        var result = transactionService.getCardTransactions(cardId, pageable);
+
+        assertEquals(1, result.getTotalElements());
+        verify(cardRepository).existsByIdAndUserId(cardId, userId);
+    }
+    @Test
+    void getCardTransactions_shouldThrowWhenCardNotOwned() {
+        Long cardId = 1L;
+        Long userId = 1L;
+        Pageable pageable = Pageable.unpaged();
+
+        User user = new User();
+        user.setId(userId);
+
+        when(cardRepository.existsByIdAndUserId(cardId, userId)).thenReturn(false);
+
+        setupAuthenticatedUser(user);
+
+        assertThrows(CardAccessDeniedException.class,
+                () -> transactionService.getCardTransactions(cardId, pageable));
+
+        verify(transactionRepository, never()).findBySourceCardIdOrTargetCardId(any(), any(), any());
     }
 }

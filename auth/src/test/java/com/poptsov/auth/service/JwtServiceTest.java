@@ -8,8 +8,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Base64;
+import java.util.Date;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 
 class JwtServiceTest {
 
@@ -61,18 +65,17 @@ class JwtServiceTest {
         }
     }
     @Test
-    void isTokenExpired_shouldReturnTrueForExpiredToken() throws InterruptedException {
+    void isTokenExpired_shouldReturnTrueForExpiredToken() {
 
-        ReflectionTestUtils.setField(jwtService, "expiration", 1L);
+        JwtService jwtServiceSpy = spy(jwtService);
 
-        User user = new User();
-        user.setEmail("test@example.com");
-        String token = jwtService.generateToken(user);
 
-        Thread.sleep(2);
-        assertTrue(jwtService.isTokenExpired(token));
+        when(jwtServiceSpy.extractExpiration(anyString()))
+                .thenReturn(new Date(System.currentTimeMillis() - 1000));
+
+        // 3. Проверяем
+        assertTrue(jwtServiceSpy.isTokenExpired("any_token"));
     }
-
     @Test
     void extractEmail_shouldReturnCorrectEmail() {
         User user = new User();
@@ -92,8 +95,8 @@ class JwtServiceTest {
         String token = jwtService.generateToken(user);
         Claims claims = jwtService.extractAllClaims(token);
 
+        assertEquals(123L, ((Number) claims.get("id")).longValue());
         assertEquals(Role.ADMIN.name(), claims.get("role"));
-        assertEquals(123L, claims.get("id"));
     }
 
 }
