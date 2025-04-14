@@ -3,6 +3,7 @@ package com.poptsov.auth.service;
 import com.poptsov.core.model.User;
 import com.poptsov.core.model.Role;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -12,8 +13,7 @@ import java.util.Date;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 class JwtServiceTest {
 
@@ -66,16 +66,24 @@ class JwtServiceTest {
     }
     @Test
     void isTokenExpired_shouldReturnTrueForExpiredToken() {
+        User user = new User();
+        user.setEmail("test@example.com");
 
-        JwtService jwtServiceSpy = spy(jwtService);
+        JwtService shortLivedJwtService = new JwtService();
+        ReflectionTestUtils.setField(shortLivedJwtService, "secretKey", secretKey);
+        ReflectionTestUtils.setField(shortLivedJwtService, "expiration", 1L);
 
+        String token = shortLivedJwtService.generateToken(user);
 
-        when(jwtServiceSpy.extractExpiration(anyString()))
-                .thenReturn(new Date(System.currentTimeMillis() - 1000));
+        try {
+            Thread.sleep(10);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
 
-        // 3. Проверяем
-        assertTrue(jwtServiceSpy.isTokenExpired("any_token"));
+        assertThrows(ExpiredJwtException.class, () -> jwtService.isTokenExpired(token));
     }
+
     @Test
     void extractEmail_shouldReturnCorrectEmail() {
         User user = new User();
