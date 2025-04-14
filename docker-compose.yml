@@ -19,7 +19,7 @@ services:
       POSTGRES_PORT: 5432
       POSTGRES_DB: card-db
       POSTGRES_USER: postgres
-      POSTGRES_ROOT_PASSWORD: 'card_password'
+      POSTGRES_PASSWORD: 'card_password'
     networks:
       - cardnet
     ports:
