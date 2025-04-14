@@ -1,18 +1,22 @@
 package com.poptsov.core.model;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "cards")
+@Table(name = "cards", indexes = {
+        @Index(name = "idx_cards_user_id", columnList = "user_id")})
 public class Card {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
@@ -22,18 +26,31 @@ public class Card {
     @Column(name = "card_number_masked", nullable = false)
     private String cardNumberMasked;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 255)
     private String holderName;
 
     @Column(name = "expiration_date", nullable = false)
     private LocalDate expirationDate;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "DECIMAL(15,2) DEFAULT 0.00")
     private BigDecimal balance;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 20)
     @Enumerated(EnumType.STRING)
     private CardStatus status;
+
+    @Column(name = "created_at", updatable = false)
+    @CreationTimestamp
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
 
     public Card(Long id, User user, String cardNumberEncrypted, String cardNumberMasked, String holderName, LocalDate expirationDate, BigDecimal balance, CardStatus status) {
         this.id = id;
