@@ -46,11 +46,12 @@ public class CardServiceImpl implements CardService {
     private final CardNumberEncryptor encryptor;
     private final TransactionRepository transactionRepository;
     private final TransactionMapper transactionMapper;
+    private final SecurityUtils securityUtils;
 
     private static final Logger log = LoggerFactory.getLogger(CardServiceImpl.class);
 
     @Autowired
-    public CardServiceImpl(CardRepository cardRepository, UserRepository userRepository, CardMapper cardMapper, CardNumberGenerator numberGenerator, CardNumberEncryptor encryptor, TransactionRepository transactionRepository, TransactionMapper transactionMapper) {
+    public CardServiceImpl(CardRepository cardRepository, UserRepository userRepository, CardMapper cardMapper, CardNumberGenerator numberGenerator, CardNumberEncryptor encryptor, TransactionRepository transactionRepository, TransactionMapper transactionMapper, SecurityUtils securityUtils) {
         this.cardRepository = cardRepository;
         this.userRepository = userRepository;
         this.cardMapper = cardMapper;
@@ -58,6 +59,7 @@ public class CardServiceImpl implements CardService {
         this.encryptor = encryptor;
         this.transactionRepository = transactionRepository;
         this.transactionMapper = transactionMapper;
+        this.securityUtils = securityUtils;
     }
 
     @Override
@@ -125,7 +127,7 @@ public class CardServiceImpl implements CardService {
 
     @Transactional(readOnly = true)
     public List<CardResponseDto> getUserCards() {
-        Long userId = SecurityUtils.getCurrentUser().getId();
+        Long userId = securityUtils.getCurrentUser().getId();
         log.debug("Fetching cards for user ID: {}", userId);
 
         List<Card> cards = cardRepository.findByUserId(userId);
@@ -138,7 +140,7 @@ public class CardServiceImpl implements CardService {
 
     @Override
     public CardResponseDto userBlockCard(Long cardId) {
-        Long userId = SecurityUtils.getCurrentUser().getId();
+        Long userId = securityUtils.getCurrentUser().getId();
         log.info("User ID: {} attempting to block card ID: {}", userId, cardId);
         Card card = cardRepository.findByIdAndUserId(cardId, userId)
                 .orElseThrow(() -> {
@@ -157,7 +159,7 @@ public class CardServiceImpl implements CardService {
     @Override
     @Transactional(readOnly = true)
     public Page<TransactionResponseDto> getCardTransactions(Long cardId, Pageable pageable) {
-        Long userId = SecurityUtils.getCurrentUser().getId();
+        Long userId = securityUtils.getCurrentUser().getId();
         if (!cardRepository.existsByIdAndUserId(cardId, userId)) {
             throw new CardAccessDeniedException(cardId);
         }

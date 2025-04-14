@@ -24,4 +24,5 @@ public record TransactionResponseDto(
         String description,
         @Schema(description = "Дата и время создания транзакции", example = "2023-05-15T14:30:00")
         LocalDateTime createdAt
-) {}
+) {
+}
