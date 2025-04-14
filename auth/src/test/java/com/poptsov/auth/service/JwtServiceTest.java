@@ -3,13 +3,17 @@ package com.poptsov.auth.service;
 import com.poptsov.core.model.User;
 import com.poptsov.core.model.Role;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Base64;
+import java.util.Date;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
 
 class JwtServiceTest {
 
@@ -60,4 +64,47 @@ class JwtServiceTest {
                     e instanceof io.jsonwebtoken.MalformedJwtException);
         }
     }
+    @Test
+    void isTokenExpired_shouldReturnTrueForExpiredToken() {
+        User user = new User();
+        user.setEmail("test@example.com");
+
+        JwtService shortLivedJwtService = new JwtService();
+        ReflectionTestUtils.setField(shortLivedJwtService, "secretKey", secretKey);
+        ReflectionTestUtils.setField(shortLivedJwtService, "expiration", 1L);
+
+        String token = shortLivedJwtService.generateToken(user);
+
+        try {
+            Thread.sleep(10);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
+        assertThrows(ExpiredJwtException.class, () -> jwtService.isTokenExpired(token));
+    }
+
+    @Test
+    void extractEmail_shouldReturnCorrectEmail() {
+        User user = new User();
+        user.setEmail("test@example.com");
+        String token = jwtService.generateToken(user);
+
+        assertEquals(user.getEmail(), jwtService.extractEmail(token));
+    }
+
+    @Test
+    void token_shouldContainCustomClaims() {
+        User user = new User();
+        user.setEmail("test@example.com");
+        user.setRole(Role.ADMIN);
+        user.setId(123L);
+
+        String token = jwtService.generateToken(user);
+        Claims claims = jwtService.extractAllClaims(token);
+
+        assertEquals(123L, ((Number) claims.get("id")).longValue());
+        assertEquals(Role.ADMIN.name(), claims.get("role"));
+    }
+
 }

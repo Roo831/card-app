@@ -31,15 +31,17 @@ public class TransactionServiceImpl implements TransactionService {
     private final TransactionMapper transactionMapper;
     private final CardNumberEncryptor cardNumberEncryptor;
     private final TransactionLimitService transactionLimitService;
+    private final SecurityUtils securityUtils;
 
 
     @Autowired
-    public TransactionServiceImpl(TransactionRepository transactionRepository, CardRepository cardRepository, TransactionMapper transactionMapper, CardNumberEncryptor cardNumberEncryptor, TransactionLimitService transactionLimitService) {
+    public TransactionServiceImpl(TransactionRepository transactionRepository, CardRepository cardRepository, TransactionMapper transactionMapper, CardNumberEncryptor cardNumberEncryptor, TransactionLimitService transactionLimitService, SecurityUtils securityUtils) {
         this.transactionRepository = transactionRepository;
         this.cardRepository = cardRepository;
         this.transactionMapper = transactionMapper;
         this.cardNumberEncryptor = cardNumberEncryptor;
         this.transactionLimitService = transactionLimitService;
+        this.securityUtils = securityUtils;
     }
 
     @Transactional
@@ -47,7 +49,7 @@ public class TransactionServiceImpl implements TransactionService {
         log.info("Initiating transfer from card {} to card {} for amount {}",
                 request.sourceCardId(), request.targetCardId(), request.amount());
 
-        Long userId = SecurityUtils.getCurrentUser().getId();
+        Long userId = securityUtils.getCurrentUser().getId();
         log.debug("Current user ID: {}", userId);
 
         Card sourceCard = cardRepository.findByIdAndUserId(request.sourceCardId(), userId)
@@ -104,7 +106,7 @@ public class TransactionServiceImpl implements TransactionService {
     }
     @Transactional(readOnly = true)
     public Page<TransactionResponseDto> getCardTransactions(Long cardId, Pageable pageable) {
-        Long userId = SecurityUtils.getCurrentUser().getId();
+        Long userId = securityUtils.getCurrentUser().getId();
         log.debug("Getting transactions for cardId: {}, userId: {}", cardId, userId);
 
         if (!cardRepository.existsByIdAndUserId(cardId, userId)) {
