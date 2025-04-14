@@ -7,5 +7,24 @@ services:
       POSTGRES_USER: 'postgres'
       POSTGRES_PASSWORD: 'card_password'
       POSTGRES_DB: card-db
+    networks:
+      - cardnet
     ports:
       - "5433:5432"
+
+  cardcont:
+    image: roo831/card-app:0.0.1
+    environment:
+      POSTGRES_HOST: sqlcont
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: card-db
+      POSTGRES_USER: postgres
+      POSTGRES_ROOT_PASSWORD: 'card_password'
+    networks:
+      - cardnet
+    ports:
+      - "8081:8081"
+
+networks:
+  cardnet:
+    driver: bridge
