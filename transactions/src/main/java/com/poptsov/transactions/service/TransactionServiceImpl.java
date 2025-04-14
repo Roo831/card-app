@@ -58,6 +58,12 @@ public class TransactionServiceImpl implements TransactionService {
 
         log.debug("Source card found: {}", sourceCard.getId());
 
+        if (sourceCard.getBalance().compareTo(request.amount()) < 0) {
+            log.error("Insufficient funds on card {}. Balance: {}, Requested: {}",
+                    sourceCard.getId(), sourceCard.getBalance(), request.amount());
+            throw new InsufficientFundsException("Not enough money on the card");
+        }
+
         Card targetCard = cardRepository.findById(request.targetCardId())
                 .orElseThrow(() -> {
                     log.error("Target card not found: {}", request.targetCardId());
@@ -73,12 +79,6 @@ public class TransactionServiceImpl implements TransactionService {
         } catch (LimitNotSetException | LimitExceededException | LimitExpiredException e) {
             log.warn("Limit violation for card {}: {}", request.sourceCardId(), e.getMessage());
             throw e;
-        }
-
-        if (sourceCard.getBalance().compareTo(request.amount()) < 0) {
-            log.error("Insufficient funds on card {}. Balance: {}, Requested: {}",
-                    sourceCard.getId(), sourceCard.getBalance(), request.amount());
-            throw new InsufficientFundsException("Not enough money on the card");
         }
 
         sourceCard.setBalance(sourceCard.getBalance().subtract(request.amount()));

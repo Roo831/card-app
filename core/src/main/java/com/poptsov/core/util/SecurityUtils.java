@@ -20,12 +20,11 @@ public class SecurityUtils {
         }
 
         Object principal = authentication.getPrincipal();
-        if (!(principal instanceof User)) {
+        if (!(principal instanceof User user)) {
             log.error("Invalid principal type: {}", principal.getClass().getName());
             throw new EntityNotFoundException("Invalid user principal");
         }
 
-        User user = (User) principal;
         log.trace("Retrieved current user: {}", user.getId());
         return user;
     }
