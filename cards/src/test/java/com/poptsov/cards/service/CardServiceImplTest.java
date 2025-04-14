@@ -14,9 +14,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -42,7 +46,6 @@ class CardServiceImplTest {
 
     @Test
     void createCard_shouldCreateNewCard() {
-        // Подготовка тестовых данных
         CardCreateDto dto = new CardCreateDto(1L, "IVAN IVANOV",
                 LocalDate.now().plusYears(2), BigDecimal.valueOf(1000));
 
@@ -71,10 +74,8 @@ class CardServiceImplTest {
         when(cardRepository.save(any())).thenReturn(savedCard);
         when(cardMapper.toResponseDto(any())).thenReturn(responseDto);
 
-        // Вызов метода
         var result = cardService.createCard(dto);
 
-        // Проверки
         assertNotNull(result);
         assertEquals("**** **** **** 3456", result.maskedNumber());
         verify(cardRepository).save(any(Card.class));
@@ -91,5 +92,39 @@ class CardServiceImplTest {
         assertThrows(UserNotFoundException.class, () -> cardService.createCard(dto));
 
         verify(cardRepository, never()).save(any());
+    }
+
+    @Test
+    void getAllCards_shouldReturnFilteredByStatus() {
+        String status = "ACTIVE";
+        Pageable pageable = Pageable.unpaged();
+        Card card = new Card();
+        Page<Card> page = new PageImpl<>(List.of(card));
+
+        when(cardRepository.findByStatus(CardStatus.valueOf(status), pageable)).thenReturn(page);
+        when(cardMapper.toResponseDto(any())).thenReturn(new CardResponseDto(1L, "masked", "holder",
+                LocalDate.now(), BigDecimal.ZERO, CardStatus.ACTIVE));
+
+        var result = cardService.getAllCards(status, pageable);
+
+        assertEquals(1, result.getTotalElements());
+        verify(cardRepository).findByStatus(CardStatus.valueOf(status), pageable);
+    }
+
+    @Test
+    void getAllCards_shouldReturnAllWhenNoStatus() {
+
+        Pageable pageable = Pageable.unpaged();
+        Card card = new Card();
+        Page<Card> page = new PageImpl<>(List.of(card));
+
+        when(cardRepository.findAll(pageable)).thenReturn(page);
+        when(cardMapper.toResponseDto(any())).thenReturn(new CardResponseDto(1L, "masked", "holder",
+                LocalDate.now(), BigDecimal.ZERO, CardStatus.ACTIVE));
+
+        var result = cardService.getAllCards(null, pageable);
+
+        assertEquals(1, result.getTotalElements());
+        verify(cardRepository).findAll(pageable);
     }
 }

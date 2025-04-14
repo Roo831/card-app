@@ -60,4 +60,40 @@ class JwtServiceTest {
                     e instanceof io.jsonwebtoken.MalformedJwtException);
         }
     }
+    @Test
+    void isTokenExpired_shouldReturnTrueForExpiredToken() throws InterruptedException {
+
+        ReflectionTestUtils.setField(jwtService, "expiration", 1L);
+
+        User user = new User();
+        user.setEmail("test@example.com");
+        String token = jwtService.generateToken(user);
+
+        Thread.sleep(2);
+        assertTrue(jwtService.isTokenExpired(token));
+    }
+
+    @Test
+    void extractEmail_shouldReturnCorrectEmail() {
+        User user = new User();
+        user.setEmail("test@example.com");
+        String token = jwtService.generateToken(user);
+
+        assertEquals(user.getEmail(), jwtService.extractEmail(token));
+    }
+
+    @Test
+    void token_shouldContainCustomClaims() {
+        User user = new User();
+        user.setEmail("test@example.com");
+        user.setRole(Role.ADMIN);
+        user.setId(123L);
+
+        String token = jwtService.generateToken(user);
+        Claims claims = jwtService.extractAllClaims(token);
+
+        assertEquals(Role.ADMIN.name(), claims.get("role"));
+        assertEquals(123L, claims.get("id"));
+    }
+
 }
