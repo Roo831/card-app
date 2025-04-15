@@ -8,7 +8,7 @@ import org.springframework.data.web.config.EnableSpringDataWebSupport;
 
 import static org.springframework.data.web.config.EnableSpringDataWebSupport.PageSerializationMode.VIA_DTO;
 
-@EnableJpaRepositories(basePackages = {"com.poptsov.core.repository", "com.poptsov.core.repository", "com.poptsov.transactions.repository"})
+@EnableJpaRepositories(basePackages = {"com.poptsov.core.repository", "com.poptsov.core.repository"})
 @SpringBootApplication(scanBasePackages = {
         "com.poptsov.auth",
         "com.poptsov.core",

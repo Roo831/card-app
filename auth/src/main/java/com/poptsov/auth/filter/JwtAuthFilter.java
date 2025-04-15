@@ -36,6 +36,14 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         this.userDetailsService = userDetailsService;
     }
 
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getServletPath();
+        return path.startsWith("/api/auth/register") ||
+                path.startsWith("/api/auth/login") ||
+                path.startsWith("/swagger-ui") ||
+                path.startsWith("/v3/api-docs");
+    }
 
     @Override
     protected void doFilterInternal(

@@ -48,14 +48,9 @@ public class SecurityConfig {
                                 "/webjars/**",
                                 "/api-docs/**"
                         ).permitAll()
-
-
                         .requestMatchers("/api/auth/**").permitAll()
-
-
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/**").authenticated()
-
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
