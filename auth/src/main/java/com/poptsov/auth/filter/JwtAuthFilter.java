@@ -3,7 +3,6 @@ package com.poptsov.auth.filter;
 
 import com.poptsov.auth.service.JwtService;
 import com.poptsov.auth.service.UserService;
-import com.poptsov.auth.service.UserServiceImpl;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

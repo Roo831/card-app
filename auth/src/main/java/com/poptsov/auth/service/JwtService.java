@@ -29,6 +29,13 @@ public class JwtService {
 
     public String generateToken(UserDetails userDetails) {
         log.debug("Generating token for user: {}", userDetails.getUsername());
+
+        Date now = new Date();
+        Date expirationDate = new Date(now.getTime() + expiration);
+
+        log.debug("Token creation time: {}", now);
+        log.debug("Token expiration time: {}", expirationDate);
+
         Map<String, Object> claims = new HashMap<>();
         if (userDetails instanceof User user) {
             claims.put("id", user.getId());
@@ -37,8 +44,8 @@ public class JwtService {
         return Jwts.builder()
                 .claims(claims)
                 .subject(userDetails.getUsername())
-                .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + expiration))
+                .issuedAt(now)
+                .expiration(expirationDate)
                 .signWith(getSigningKey())
                 .compact();
     }
@@ -74,6 +81,7 @@ public class JwtService {
     Claims extractAllClaims(String token) {
             return Jwts.parser()
                     .setSigningKey(getSigningKey())
+                    .setAllowedClockSkewSeconds(60)
                     .build()
                     .parseClaimsJws(token)
                     .getBody();

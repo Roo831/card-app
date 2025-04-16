@@ -10,7 +10,7 @@ spring:
         - classpath:/static/
         - classpath:/META-INF/resources/
   datasource:
-    url: jdbc:postgresql://sqlcont:5432/card-db
+    url: jdbc:postgresql://localhost:5433/card-db
     username: postgres
     password: card_password
     driver-class-name: org.postgresql.Driver

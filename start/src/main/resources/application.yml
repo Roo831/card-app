@@ -25,7 +25,7 @@ spring:
     enabled: true
     change-log: classpath:/db/changelog/db.changelog-master.yml
   profiles:
-    active: prod
+    active: dev #prod
 
 jwt:
   secret: q6b+8X0O8zIYFhG4u4n5nJ3hK9x9m9QWm6H6xW9f0uI=
