@@ -7,6 +7,8 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Iterator;
 
 @Entity
 @Table(name = "cards", indexes = {
@@ -51,7 +53,6 @@ public class Card {
     protected void onUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
-
     public Card(Long id, User user, String cardNumberEncrypted, String cardNumberMasked, String holderName, LocalDate expirationDate, BigDecimal balance, CardStatus status) {
         this.id = id;
         this.user = user;
@@ -197,4 +198,5 @@ public class Card {
             return "Card.CardBuilder(id=" + this.id + ", user=" + this.user + ", cardNumberEncrypted=" + this.cardNumberEncrypted + ", cardNumberMasked=" + this.cardNumberMasked + ", holderName=" + this.holderName + ", expirationDate=" + this.expirationDate + ", balance=" + this.balance + ", status=" + this.status + ")";
         }
     }
+
 }

@@ -3,7 +3,6 @@ package com.poptsov.auth.filter;
 
 import com.poptsov.auth.service.JwtService;
 import com.poptsov.auth.service.UserService;
-import com.poptsov.auth.service.UserServiceImpl;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -36,14 +35,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         this.userDetailsService = userDetailsService;
     }
 
-    @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) {
-        String path = request.getServletPath();
-        return path.startsWith("/api/auth/register") ||
-                path.startsWith("/api/auth/login") ||
-                path.startsWith("/swagger-ui") ||
-                path.startsWith("/v3/api-docs");
-    }
 
     @Override
     protected void doFilterInternal(
